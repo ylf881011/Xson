@@ -1,4 +1,3 @@
-# Xson
 
 Xson 是一个基于 Rust 实现的 JSON 序列化库示例，使用 JNI 与 Java 交互。
 
@@ -40,4 +39,3 @@ System.out.println(pretty);
 mvn package
 java -cp target/classes com.example.xson.PerfTest
 ```
-
