@@ -5,7 +5,6 @@ edition = "2021"
 
 [lib]
 name = "xson"
-# 生成供 JNI 调用的动态库
 crate-type = ["cdylib"]
 
 [dependencies]
