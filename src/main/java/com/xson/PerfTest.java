@@ -11,12 +11,23 @@ public class PerfTest {
      * @param args 命令行参数
      */
     public static void main(String[] args) {
-        String sample = "{\"key\":123,\"arr\":[1,2,3],\"msg\":\"hello\"}";
+        Sample sample = new Sample();
+        sample.key = 123;
+        sample.arr = new int[]{1,2,3};
+        sample.msg = "hello";
+
         long start = System.currentTimeMillis();
         for (int i = 0; i < 10000; i++) {
-            Xson.toJson(sample);
+            String json = Xson.toJson(sample);
+            Xson.fromJson(json, Sample.class);
         }
         long end = System.currentTimeMillis();
-        System.out.println("Rust prettyPrint time: " + (end - start) + "ms");
+        System.out.println("Rust encode/decode time: " + (end - start) + "ms");
+    }
+
+    public static class Sample {
+        public int key;
+        public int[] arr;
+        public String msg;
     }
 }

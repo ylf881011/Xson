@@ -1,7 +1,7 @@
 package com.xson;
 
 /**
- * 负责加载本地 Rust 动态库并声明 JNI 方法的类。
+ * JNI 桥接类，负责加载本地 Rust 动态库并声明底层方法。
  */
 public class Native {
     static {
@@ -25,10 +25,18 @@ public class Native {
     }
 
     /**
-     * 调用 Rust 实现的 prettyPrint 方法，对传入的 JSON 字符串进行格式化。
+     * 将 Map 序列化为 JSON 字符串。
      *
-     * @param json 输入的 JSON 字符串
-     * @return 美化后的 JSON 字符串，如果失败返回 null
+     * @param map Java Map 对象
+     * @return JSON 字符串
      */
-    public static native String prettyPrint(String json);
+    public static native String encode(java.util.Map<String, Object> map);
+
+    /**
+     * 将 JSON 字符串反序列化为 Map。
+     *
+     * @param json JSON 字符串
+     * @return 解析后的 Map
+     */
+    public static native java.util.Map<String, Object> decode(String json);
 }
