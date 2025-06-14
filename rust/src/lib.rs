@@ -11,7 +11,7 @@ use serde_json::Value;
 
 #[no_mangle]
 pub extern "system" fn Java_com_xson_Native_prettyPrint(
-    env: JNIEnv,
+    mut env: JNIEnv,
     _class: JClass,
     input: JString,
 ) -> jstring {
@@ -32,3 +32,4 @@ pub extern "system" fn Java_com_xson_Native_prettyPrint(
         Err(_) => std::ptr::null_mut(),
     }
 }
+
