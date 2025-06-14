@@ -1,18 +1,19 @@
-# Xson
 
-Xson \u662f\u4e00\u4e2a\u57fa\u4e8e Rust \u5b9e\u73b0\u7684 JSON \u5e8f\u5217\u5316\u5e93\u793a\u4f8b\uff0c\u4f7f\u7528 JNI \u4e0e Java \u4ea4\u4e92\u3002
+Xson 是一个基于 Rust 实现的 JSON 序列化库示例，使用 JNI 与 Java 交互。
 
-\u8fd9\u4e2a\u9879\u76ee\u5c55\u793a\u5982\u4f55\u901a\u8fc7 Maven \u521b\u5efa\u5e03\u7f57\u5f0f\u4ee3\u7801\uff0c\u5e76\u5728\u7cfb\u7edf\u73af\u5883\u624b\u52a8\u7f16\u8bd1 Rust \u52a8\u6001\u5e93\u3002
+这个项目展示如何通过 Maven 构建代码，并在本地环境手动编译 Rust 动态库。
 
-## \u7f16\u8bd1
+## 编译
 
-1. \u786c\u4ef6\u5b89\u88c5 Rust \u5de5\u5177\u94fe\uff08\u5b9e\u73b0\u73af\u5883\u9700\u8981\u81ea\u884c\u7f16\u8bd1\uff09
-2. `mvn package` \u5c06\u8c03\u7528 `cargo build --release` \u7f16\u8bd1 Rust \u9879\u76ee
-3. \u7f16\u8bd1\u5b8c\u6210\u540e\uff0c`libxson.so` \u4f1a\u88ab\u62f7\u8d1d\u5230 jar \u5185\u90e8
+1. 安装 Rust 工具链（需自行在系统中配置）。
+2. 运行 `mvn package`，会调用 `cargo build --release` 编译 Rust 项目。
+3. 编译完成后，`libxson.so` 会被复制到打包的 jar 中。
 
-> \u7531\u4e8e\u5f53\u524d\u73af\u5883\u65e0\u6cd5\u4ece crates.io \u4e0b\u8f7d\u4f9d\u8d56\uff0c\u8bf7\u786e\u4fdd\u81ea\u5df1\u7684\u7f16\u8bd1\u73af\u5883\u53ef\u4ee5\u8bbf\u95ee\u7f51\u7edc\u3002
+> 由于当前环境无法从 crates.io 下载依赖，请确保你的编译环境可以访问网络。
 
-## \u4f7f\u7528
+## 使用
+
+在项目的 `pom.xml` 中添加依赖：
 
 ```xml
 <dependency>
@@ -22,7 +23,7 @@ Xson \u662f\u4e00\u4e2a\u57fa\u4e8e Rust \u5b9e\u73b0\u7684 JSON \u5e8f\u5217\u5
 </dependency>
 ```
 
-Java \u7a0b\u5e8f\u4f8b\u5b50:
+示例代码：
 
 ```java
 String json = "{\"foo\":1}";
@@ -30,13 +31,11 @@ String pretty = com.example.xson.Xson.toJson(json);
 System.out.println(pretty);
 ```
 
-## \u6027\u80fd\u5386\u7a0b
+## 性能测试
 
-\u6267\u884c `PerfTest` \u53ef\u4ee5\u7b80\u5355\u6d4b\u8bd5 JNI \u8c03\u7528\u7684\u6027\u80fd\u3002
+执行 `PerfTest` 可以简单测试 JNI 调用的性能：
 
 ```bash
-mvn -f java/pom.xml package
-java -cp java/target/classes com.example.xson.PerfTest
+mvn package
+java -cp target/classes com.example.xson.PerfTest
 ```
-
-\u8bf7\u6ce8\u610f\uff1a\u5982\u679c Maven \u6216 Rust \u56e0\u7f51\u7edc\u539f\u56e0\u65e0\u6cd5\u81ea\u52a8\u4e0b\u8f7d\u4f9d\u8d56\uff0c\u9700\u4f60\u81ea\u884c\u914d\u7f6e\u73af\u5883\u3002
