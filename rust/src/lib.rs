@@ -32,3 +32,4 @@ pub extern "system" fn Java_com_xson_Native_prettyPrint(
         Err(_) => std::ptr::null_mut(),
     }
 }
+
