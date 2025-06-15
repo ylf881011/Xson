@@ -124,11 +124,12 @@ pub extern "system" fn Java_com_xson_Native_decode(
     _class: JClass,
     json: JString,
 ) -> jobject {
-    let input: String = match env.get_string(&json) {
+    let mut input: String = match env.get_string(&json) {
         Ok(s) => s.into(),
         Err(_) => return JObject::null().into_raw(),
     };
-    match simd_from_str::<Value>(&input) {
+    match simd_from_str::<Value>(&mut input) {
+
         Ok(v) => match to_object(&mut env, &v) {
             Ok(obj) => obj.into_raw(),
             Err(_) => JObject::null().into_raw(),
@@ -136,3 +137,4 @@ pub extern "system" fn Java_com_xson_Native_decode(
         Err(_) => JObject::null().into_raw(),
     }
 }
+

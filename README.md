@@ -38,3 +38,4 @@ java -cp target/classes com.xson.PerfTest
 ```
 
 若运行环境无法加载本地库，`Xson` 会自动回退到纯 Java 实现，但速度会有所下降。
+
