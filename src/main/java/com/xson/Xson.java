@@ -2,6 +2,8 @@ package com.xson;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -14,18 +16,57 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class Xson {
 
-    private static final Map<Class<?>, Field[]> FIELD_CACHE = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, FieldAccess[]> FIELD_CACHE = new ConcurrentHashMap<>();
 
-    private static Field[] getFields(Class<?> cls) {
+    private static FieldAccess[] getFields(Class<?> cls) {
         return FIELD_CACHE.computeIfAbsent(cls, c -> {
             Field[] fs = c.getDeclaredFields();
-            for (Field f : fs) {
+            FieldAccess[] infos = new FieldAccess[fs.length];
+            MethodHandles.Lookup lookup = MethodHandles.lookup();
+            for (int i = 0; i < fs.length; i++) {
+                Field f = fs[i];
                 f.setAccessible(true);
+                try {
+                    MethodHandle getter = lookup.unreflectGetter(f);
+                    MethodHandle setter = lookup.unreflectSetter(f);
+                    infos[i] = new FieldAccess(f.getName(), f.getType(), getter, setter);
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
             }
-            return fs;
+            return infos;
         });
     }
 
+    private static class FieldAccess {
+        final String name;
+        final Class<?> type;
+        final MethodHandle getter;
+        final MethodHandle setter;
+
+        FieldAccess(String name, Class<?> type, MethodHandle getter, MethodHandle setter) {
+            this.name = name;
+            this.type = type;
+            this.getter = getter;
+            this.setter = setter;
+        }
+
+        Object get(Object target) {
+            try {
+                return getter.invoke(target);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        void set(Object target, Object value) {
+            try {
+                setter.invoke(target, value);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
 
     /**
      * 将任意 Java 对象序列化为 JSON 字符串。
@@ -81,8 +122,8 @@ public class Xson {
             return obj;
         } else {
             Map<String, Object> map = new HashMap<>();
-            for (Field f : getFields(type)) {
-                map.put(f.getName(), toPlain(f.get(obj)));
+            for (FieldAccess fa : getFields(type)) {
+                map.put(fa.name, toPlain(fa.get(obj)));
             }
             return map;
         }
@@ -94,17 +135,17 @@ public class Xson {
 
     private static <T> T fromMap(Map<String, Object> map, Class<T> clazz) throws ReflectiveOperationException {
         T instance = clazz.getDeclaredConstructor().newInstance();
-        for (Field f : getFields(clazz)) {
-            if (!map.containsKey(f.getName())) {
+        for (FieldAccess f : getFields(clazz)) {
+            if (!map.containsKey(f.name)) {
                 continue;
             }
-            Object value = map.get(f.getName());
+            Object value = map.get(f.name);
             if (value == null) {
                 continue;
             }
 
-            Object conv = convertValue(value, f.getType());
-            if (conv != null || !f.getType().isPrimitive()) {
+            Object conv = convertValue(value, f.type);
+            if (conv != null || !f.type.isPrimitive()) {
                 f.set(instance, conv);
             }
         }
