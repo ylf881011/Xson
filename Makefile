@@ -7,3 +7,4 @@ clean:
 	mvn -B clean
 
 .PHONY: all clean
+
