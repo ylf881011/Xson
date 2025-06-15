@@ -36,3 +36,4 @@ User other = Xson.fromJson(json, User.class);
 mvn package
 java -cp target/classes com.xson.PerfTest
 ```
+
