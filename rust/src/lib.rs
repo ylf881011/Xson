@@ -10,9 +10,9 @@ use jni::JNIEnv;
 use serde_json::{Map as JsonMap, Value};
 
 /// 将 Java 对象递归转换为 serde_json::Value
-fn to_value(env: &JNIEnv, obj: JObject) -> Result<Value, jni::errors::Error> {
+fn to_value(env: &mut JNIEnv, obj: JObject) -> Result<Value, jni::errors::Error> {
     if env.is_instance_of(obj, "java/lang/String")? {
-        let s: String = env.get_string(JString::from(obj))?.into();
+        let s: String = env.get_string(&JString::from(obj))?.into();
         Ok(Value::String(s))
     } else if env.is_instance_of(obj, "java/lang/Boolean")? {
         let b: bool = env.call_method(obj, "booleanValue", "()Z", &[])?.z()?;
@@ -21,19 +21,21 @@ fn to_value(env: &JNIEnv, obj: JObject) -> Result<Value, jni::errors::Error> {
         let d: f64 = env.call_method(obj, "doubleValue", "()D", &[])?.d()?;
         Ok(Value::from(d))
     } else if env.is_instance_of(obj, "java/util/Map")? {
-        let map = JMap::from_env(env.clone(), obj)?;
+        let map = JMap::from_env(env, &obj)?;
         let mut json = JsonMap::new();
-        for (k, v) in map.iter()? {
-            let key: String = env.get_string(JString::from(k))?.into();
+        for (k, v) in map.iter(env)? {
+            let key: String = env.get_string(&JString::from(k))?.into();
             json.insert(key, to_value(env, v)?);
         }
         Ok(Value::Object(json))
     } else if env.is_instance_of(obj, "java/util/List")? {
-        let list = JList::from_env(env.clone(), obj)?;
-        let mut arr = Vec::with_capacity(list.size()? as usize);
-        for i in 0..list.size()? {
-            let item = list.get(i)?;
-            arr.push(to_value(env, item)?);
+        let list = JList::from_env(env, &obj)?;
+        let size = list.size(env)? as usize;
+        let mut arr = Vec::with_capacity(size);
+        for i in 0..size as i32 {
+            if let Some(item) = list.get(env, i)? {
+                arr.push(to_value(env, item)?);
+            }
         }
         Ok(Value::Array(arr))
     } else {
@@ -42,7 +44,7 @@ fn to_value(env: &JNIEnv, obj: JObject) -> Result<Value, jni::errors::Error> {
 }
 
 /// 将 serde_json::Value 转换为 java 对象
-fn to_object<'a>(env: &JNIEnv<'a>, value: &Value) -> Result<JObject<'a>, jni::errors::Error> {
+fn to_object<'a>(env: &mut JNIEnv<'a>, value: &Value) -> Result<JObject<'a>, jni::errors::Error> {
     match value {
         Value::String(s) => {
             let jstr = env.new_string(s)?;
@@ -62,21 +64,21 @@ fn to_object<'a>(env: &JNIEnv<'a>, value: &Value) -> Result<JObject<'a>, jni::er
         Value::Array(arr) => {
             let class = env.find_class("java/util/ArrayList")?;
             let list = env.new_object(class, "()V", &[])?;
-            let jlist = JList::from_env(env.clone(), list)?;
+            let mut jlist = JList::from_env(env, &list)?;
             for v in arr {
                 let item = to_object(env, v)?;
-                jlist.add(item)?;
+                jlist.add(env, &item)?;
             }
             Ok(list)
         }
         Value::Object(map) => {
             let class = env.find_class("java/util/HashMap")?;
             let obj = env.new_object(class, "()V", &[])?;
-            let jmap = JMap::from_env(env.clone(), obj)?;
+            let mut jmap = JMap::from_env(env, &obj)?;
             for (k, v) in map {
                 let key = env.new_string(k)?;
                 let val = to_object(env, v)?;
-                jmap.put(key, val)?;
+                jmap.put(env, &key, &val)?;
             }
             Ok(obj)
         }
@@ -86,11 +88,11 @@ fn to_object<'a>(env: &JNIEnv<'a>, value: &Value) -> Result<JObject<'a>, jni::er
 
 #[no_mangle]
 pub extern "system" fn Java_com_xson_Native_encode(
-    env: JNIEnv,
+    mut env: JNIEnv,
     _class: JClass,
     map: JObject,
 ) -> jstring {
-    match to_value(&env, map) {
+    match to_value(&mut env, map) {
         Ok(value) => match serde_json::to_string(&value) {
             Ok(s) => match env.new_string(s) {
                 Ok(out) => out.into_raw(),
@@ -104,19 +106,19 @@ pub extern "system" fn Java_com_xson_Native_encode(
 
 #[no_mangle]
 pub extern "system" fn Java_com_xson_Native_decode(
-    env: JNIEnv,
+    mut env: JNIEnv,
     _class: JClass,
     json: JString,
 ) -> jobject {
     let input: String = match env.get_string(&json) {
         Ok(s) => s.into(),
-        Err(_) => return JObject::null().into_inner(),
+        Err(_) => return JObject::null().into_raw(),
     };
     match serde_json::from_str::<Value>(&input) {
-        Ok(v) => match to_object(&env, &v) {
+        Ok(v) => match to_object(&mut env, &v) {
             Ok(obj) => obj.into_raw(),
-            Err(_) => JObject::null().into_inner(),
+            Err(_) => JObject::null().into_raw(),
         },
-        Err(_) => JObject::null().into_inner(),
+        Err(_) => JObject::null().into_raw(),
     }
 }
