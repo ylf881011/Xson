@@ -137,3 +137,4 @@ pub extern "system" fn Java_com_xson_Native_decode(
         Err(_) => JObject::null().into_raw(),
     }
 }
+
