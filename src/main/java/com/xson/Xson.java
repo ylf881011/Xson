@@ -7,11 +7,25 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 向外提供通用的序列化与反序列化接口。
  */
 public class Xson {
+
+    private static final Map<Class<?>, Field[]> FIELD_CACHE = new ConcurrentHashMap<>();
+
+    private static Field[] getFields(Class<?> cls) {
+        return FIELD_CACHE.computeIfAbsent(cls, c -> {
+            Field[] fs = c.getDeclaredFields();
+            for (Field f : fs) {
+                f.setAccessible(true);
+            }
+            return fs;
+        });
+    }
+
 
     /**
      * 将任意 Java 对象序列化为 JSON 字符串。
@@ -67,8 +81,7 @@ public class Xson {
             return obj;
         } else {
             Map<String, Object> map = new HashMap<>();
-            for (Field f : type.getDeclaredFields()) {
-                f.setAccessible(true);
+            for (Field f : getFields(type)) {
                 map.put(f.getName(), toPlain(f.get(obj)));
             }
             return map;
@@ -81,8 +94,7 @@ public class Xson {
 
     private static <T> T fromMap(Map<String, Object> map, Class<T> clazz) throws ReflectiveOperationException {
         T instance = clazz.getDeclaredConstructor().newInstance();
-        for (Field f : clazz.getDeclaredFields()) {
-            f.setAccessible(true);
+        for (Field f : getFields(clazz)) {
             if (!map.containsKey(f.getName())) {
                 continue;
             }
