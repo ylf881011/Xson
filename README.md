@@ -31,9 +31,8 @@ User other = Xson.fromJson(json, User.class);
 ```
 
 ## 性能测试
-执行 `PerfTest` 可简单体验 JNI 版本的性能：
+执行 `PerfTest` 可简单体验 JNI 版本的性能，并与 fastjson2 做对比：
 ```bash
 mvn package
 java -cp target/classes com.xson.PerfTest
 ```
-

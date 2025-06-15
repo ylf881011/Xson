@@ -18,8 +18,13 @@ fn to_value(env: &mut JNIEnv, obj: JObject) -> Result<Value, jni::errors::Error>
         let b: bool = env.call_method(obj, "booleanValue", "()Z", &[])?.z()?;
         Ok(Value::Bool(b))
     } else if env.is_instance_of(&obj, "java/lang/Number")? {
-        let d: f64 = env.call_method(obj, "doubleValue", "()D", &[])?.d()?;
-        Ok(Value::from(d))
+        if env.is_instance_of(&obj, "java/lang/Integer")? || env.is_instance_of(&obj, "java/lang/Long")? {
+            let l: i64 = env.call_method(obj, "longValue", "()J", &[])?.j()?;
+            Ok(Value::from(l))
+        } else {
+            let d: f64 = env.call_method(obj, "doubleValue", "()D", &[])?.d()?;
+            Ok(Value::from(d))
+        }
     } else if env.is_instance_of(&obj, "java/util/Map")? {
         let map = JMap::from_env(env, &obj)?;
         let mut json = JsonMap::new();
@@ -57,10 +62,17 @@ fn to_object<'a>(env: &mut JNIEnv<'a>, value: &Value) -> Result<JObject<'a>, jni
             Ok(obj)
         }
         Value::Number(n) => {
-            let d = n.as_f64().unwrap_or(0.0);
-            let class = env.find_class("java/lang/Double")?;
-            let obj = env.new_object(class, "(D)V", &[jni::objects::JValue::Double(d)])?;
-            Ok(obj)
+            if let Some(i) = n.as_i64() {
+                // 优先转为 Long，若范围较小可在 Java 层转换为 Integer
+                let class = env.find_class("java/lang/Long")?;
+                let obj = env.new_object(class, "(J)V", &[jni::objects::JValue::Long(i)])?;
+                Ok(obj)
+            } else {
+                let d = n.as_f64().unwrap_or(0.0);
+                let class = env.find_class("java/lang/Double")?;
+                let obj = env.new_object(class, "(D)V", &[jni::objects::JValue::Double(d)])?;
+                Ok(obj)
+            }
         }
         Value::Array(arr) => {
             let class = env.find_class("java/util/ArrayList")?;

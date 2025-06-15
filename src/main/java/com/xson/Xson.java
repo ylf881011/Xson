@@ -47,8 +47,33 @@ public class Xson {
         T instance = clazz.getDeclaredConstructor().newInstance();
         for (Field f : clazz.getDeclaredFields()) {
             f.setAccessible(true);
-            if (map.containsKey(f.getName())) {
-                f.set(instance, map.get(f.getName()));
+            if (!map.containsKey(f.getName())) {
+                continue;
+            }
+            Object value = map.get(f.getName());
+            if (value == null) {
+                continue;
+            }
+
+            Class<?> type = f.getType();
+            if (type.isPrimitive() && value instanceof Number num) {
+                if (type == int.class) f.setInt(instance, num.intValue());
+                else if (type == long.class) f.setLong(instance, num.longValue());
+                else if (type == float.class) f.setFloat(instance, num.floatValue());
+                else if (type == double.class) f.setDouble(instance, num.doubleValue());
+                else if (type == short.class) f.setShort(instance, num.shortValue());
+                else if (type == byte.class) f.setByte(instance, num.byteValue());
+                else if (type == boolean.class && value instanceof Boolean b) f.setBoolean(instance, b);
+            } else if (Number.class.isAssignableFrom(type) && value instanceof Number num) {
+                if (type == Integer.class) value = num.intValue();
+                else if (type == Long.class) value = num.longValue();
+                else if (type == Float.class) value = num.floatValue();
+                else if (type == Short.class) value = num.shortValue();
+                else if (type == Byte.class) value = num.byteValue();
+                else if (type == Double.class) value = num.doubleValue();
+                f.set(instance, value);
+            } else {
+                f.set(instance, value);
             }
         }
         return instance;

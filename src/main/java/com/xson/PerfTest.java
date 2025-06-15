@@ -3,6 +3,8 @@ package com.xson;
 /**
  * 简单的性能压测类，通过循环调用测试 JNI 的开销。
  */
+import com.alibaba.fastjson2.JSON;
+
 public class PerfTest {
 
     /**
@@ -22,7 +24,15 @@ public class PerfTest {
             Xson.fromJson(json, Sample.class);
         }
         long end = System.currentTimeMillis();
-        System.out.println("Rust encode/decode time: " + (end - start) + "ms");
+        System.out.println("Xson time: " + (end - start) + "ms");
+
+        start = System.currentTimeMillis();
+        for (int i = 0; i < 10000; i++) {
+            String json = JSON.toJSONString(sample);
+            JSON.parseObject(json, Sample.class);
+        }
+        end = System.currentTimeMillis();
+        System.out.println("Fastjson2 time: " + (end - start) + "ms");
     }
 
     public static class Sample {
