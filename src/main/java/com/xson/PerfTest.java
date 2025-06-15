@@ -4,6 +4,7 @@ package com.xson;
  * 简单的性能压测类，通过循环调用测试 JNI 的开销。
  */
 import com.alibaba.fastjson2.JSON;
+import lombok.Data;
 
 public class PerfTest {
 
@@ -49,18 +50,18 @@ public class PerfTest {
         return s;
     }
 
-
+    @Data
     public static class Sample {
-        public int key;
-        public int[] arr;
-        public String msg;
-        public java.util.List<Nested> list;
-        public java.util.Map<String, Nested> map;
-        public Nested nested;
+        private int key;
+        private int[] arr;
+        private String msg;
+        private java.util.List<Nested> list;
+        private java.util.Map<String, Nested> map;
+        private Nested nested;
     }
-
+    @Data
     public static class Nested {
-        public String name;
-        public java.util.List<int[]> matrix;
+        private String name;
+        private java.util.List<int[]> matrix;
     }
 }
