@@ -129,6 +129,7 @@ pub extern "system" fn Java_com_xson_Native_decode(
         Err(_) => return JObject::null().into_raw(),
     };
     match simd_from_str::<Value>(&mut input) {
+
         Ok(v) => match to_object(&mut env, &v) {
             Ok(obj) => obj.into_raw(),
             Err(_) => JObject::null().into_raw(),
@@ -136,3 +137,4 @@ pub extern "system" fn Java_com_xson_Native_decode(
         Err(_) => JObject::null().into_raw(),
     }
 }
+
