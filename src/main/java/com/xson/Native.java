@@ -4,24 +4,38 @@ package com.xson;
  * JNI 桥接类，负责加载本地 Rust 动态库并声明底层方法。
  */
 public class Native {
+    /** 是否成功加载了本地库 */
+    public static final boolean LOADED;
+
     static {
+        boolean loaded = false;
         try {
             System.loadLibrary("xson");
+            loaded = true;
         } catch (UnsatisfiedLinkError ex) {
             String name = System.mapLibraryName("xson");
-            try (var in = Native.class.getResourceAsStream("/" + name)) {
-                if (in == null) {
+            // 兼容未通过 Maven 构建的场景，尝试从当前工作目录加载
+            java.nio.file.Path local = java.nio.file.Paths.get(System.getProperty("user.dir"), name);
+            try {
+                System.load(local.toString());
+                loaded = true;
+            } catch (Throwable ignore) {
+                try (var in = Native.class.getResourceAsStream("/" + name)) {
+                    if (in == null) {
+                        throw ex;
+                    }
+                    java.io.File temp = java.io.File.createTempFile("xson", name.substring(name.lastIndexOf('.')));
+                    temp.deleteOnExit();
+                    java.nio.file.Files.copy(in, temp.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                    System.load(temp.getAbsolutePath());
+                    loaded = true;
+                } catch (Exception e) {
+                    e.printStackTrace();
                     throw ex;
                 }
-                java.io.File temp = java.io.File.createTempFile("xson", name.substring(name.lastIndexOf('.')));
-                temp.deleteOnExit();
-                java.nio.file.Files.copy(in, temp.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                System.load(temp.getAbsolutePath());
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw ex;
             }
         }
+        LOADED = loaded;
     }
 
     /**

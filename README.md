@@ -38,4 +38,5 @@ java -cp target/classes com.xson.PerfTest
 ```
 
 若运行环境无法加载本地库，`Xson` 会自动回退到纯 Java 实现，但速度会有所下降。
+在未通过 Maven 构建的环境中，可在运行目录放置 `libxson.so` 以便 `Native` 类直接加载。
 
