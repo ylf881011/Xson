@@ -1,8 +1,5 @@
 package com.xson;
 
-/**
- * JNI 桥接类，负责加载本地 Rust 动态库并声明底层方法。
- */
 public class Native {
     static {
         try {

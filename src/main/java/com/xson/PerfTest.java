@@ -1,8 +1,5 @@
 package com.xson;
 
-/**
- * 简单的性能压测类，通过循环调用测试 JNI 的开销。
- */
 import com.alibaba.fastjson2.JSON;
 
 public class PerfTest {
