@@ -23,7 +23,8 @@ fn to_value(env: &mut JNIEnv, obj: JObject) -> Result<Value, jni::errors::Error>
     } else if env.is_instance_of(obj, "java/util/Map")? {
         let map = JMap::from_env(env, &obj)?;
         let mut json = JsonMap::new();
-        for (k, v) in map.iter(env)? {
+        let mut iter = map.iter(env)?;
+        while let Some((k, v)) = iter.next(env)? {
             let key: String = env.get_string(&JString::from(k))?.into();
             json.insert(key, to_value(env, v)?);
         }
@@ -64,7 +65,7 @@ fn to_object<'a>(env: &mut JNIEnv<'a>, value: &Value) -> Result<JObject<'a>, jni
         Value::Array(arr) => {
             let class = env.find_class("java/util/ArrayList")?;
             let list = env.new_object(class, "()V", &[])?;
-            let mut jlist = JList::from_env(env, &list)?;
+            let jlist = JList::from_env(env, &list)?;
             for v in arr {
                 let item = to_object(env, v)?;
                 jlist.add(env, &item)?;
@@ -74,7 +75,7 @@ fn to_object<'a>(env: &mut JNIEnv<'a>, value: &Value) -> Result<JObject<'a>, jni
         Value::Object(map) => {
             let class = env.find_class("java/util/HashMap")?;
             let obj = env.new_object(class, "()V", &[])?;
-            let mut jmap = JMap::from_env(env, &obj)?;
+            let jmap = JMap::from_env(env, &obj)?;
             for (k, v) in map {
                 let key = env.new_string(k)?;
                 let val = to_object(env, v)?;
