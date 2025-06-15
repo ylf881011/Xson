@@ -128,8 +128,8 @@ pub extern "system" fn Java_com_xson_Native_decode(
         Ok(s) => s.into(),
         Err(_) => return JObject::null().into_raw(),
     };
-    match simd_from_str::<Value>(&mut input) {
-
+    // simd_json::from_str 是 unsafe，需要放在 unsafe block 中调用
+    match unsafe { simd_from_str::<Value>(&mut input) } {
         Ok(v) => match to_object(&mut env, &v) {
             Ok(obj) => obj.into_raw(),
             Err(_) => JObject::null().into_raw(),
