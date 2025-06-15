@@ -8,6 +8,7 @@ use jni::objects::{JClass, JObject, JString, JMap, JList};
 use jni::sys::{jobject, jstring};
 use jni::JNIEnv;
 use serde_json::{Map as JsonMap, Value};
+use simd_json::serde::{to_string as simd_to_string, from_str as simd_from_str};
 
 /// 将 Java 对象递归转换为 serde_json::Value
 fn to_value(env: &mut JNIEnv, obj: JObject) -> Result<Value, jni::errors::Error> {
@@ -106,7 +107,7 @@ pub extern "system" fn Java_com_xson_Native_encode(
     map: JObject,
 ) -> jstring {
     match to_value(&mut env, map) {
-        Ok(value) => match serde_json::to_string(&value) {
+        Ok(value) => match simd_to_string(&value) {
             Ok(s) => match env.new_string(s) {
                 Ok(out) => out.into_raw(),
                 Err(_) => std::ptr::null_mut(),
@@ -127,7 +128,7 @@ pub extern "system" fn Java_com_xson_Native_decode(
         Ok(s) => s.into(),
         Err(_) => return JObject::null().into_raw(),
     };
-    match serde_json::from_str::<Value>(&input) {
+    match simd_from_str::<Value>(&input) {
         Ok(v) => match to_object(&mut env, &v) {
             Ok(obj) => obj.into_raw(),
             Err(_) => JObject::null().into_raw(),
@@ -135,4 +136,3 @@ pub extern "system" fn Java_com_xson_Native_decode(
         Err(_) => JObject::null().into_raw(),
     }
 }
-

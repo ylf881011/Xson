@@ -49,7 +49,6 @@ public class PerfTest {
         return s;
     }
 
-
     public static class Sample {
         public int key;
         public int[] arr;
