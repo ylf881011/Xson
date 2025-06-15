@@ -15,6 +15,7 @@ public class PerfTest {
     public static void main(String[] args) {
         Sample sample = buildSample();
 
+
         long start = System.currentTimeMillis();
         for (int i = 0; i < 10000; i++) {
             String json = Xson.toJson(sample);
@@ -47,6 +48,7 @@ public class PerfTest {
         s.map = m;
         return s;
     }
+
 
     public static class Sample {
         public int key;
