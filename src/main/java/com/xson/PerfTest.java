@@ -13,10 +13,8 @@ public class PerfTest {
      * @param args 命令行参数
      */
     public static void main(String[] args) {
-        Sample sample = new Sample();
-        sample.key = 123;
-        sample.arr = new int[]{1,2,3};
-        sample.msg = "hello";
+        Sample sample = buildSample();
+
 
         long start = System.currentTimeMillis();
         for (int i = 0; i < 10000; i++) {
@@ -35,9 +33,34 @@ public class PerfTest {
         System.out.println("Fastjson2 time: " + (end - start) + "ms");
     }
 
+
+    private static Sample buildSample() {
+        Sample s = new Sample();
+        s.key = 123;
+        s.arr = new int[]{1,2,3};
+        s.msg = "hello";
+        s.nested = new Nested();
+        s.nested.name = "inner";
+        s.nested.matrix = java.util.List.of(new int[]{1,2}, new int[]{3,4});
+        s.list = java.util.List.of(s.nested);
+        java.util.Map<String, Nested> m = new java.util.HashMap<>();
+        m.put("n1", s.nested);
+        s.map = m;
+        return s;
+    }
+
+
     public static class Sample {
         public int key;
         public int[] arr;
         public String msg;
+        public java.util.List<Nested> list;
+        public java.util.Map<String, Nested> map;
+        public Nested nested;
+    }
+
+    public static class Nested {
+        public String name;
+        public java.util.List<int[]> matrix;
     }
 }
