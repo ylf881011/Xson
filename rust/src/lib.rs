@@ -11,16 +11,16 @@ use serde_json::{Map as JsonMap, Value};
 
 /// 将 Java 对象递归转换为 serde_json::Value
 fn to_value(env: &mut JNIEnv, obj: JObject) -> Result<Value, jni::errors::Error> {
-    if env.is_instance_of(obj, "java/lang/String")? {
+    if env.is_instance_of(&obj, "java/lang/String")? {
         let s: String = env.get_string(&JString::from(obj))?.into();
         Ok(Value::String(s))
-    } else if env.is_instance_of(obj, "java/lang/Boolean")? {
+    } else if env.is_instance_of(&obj, "java/lang/Boolean")? {
         let b: bool = env.call_method(obj, "booleanValue", "()Z", &[])?.z()?;
         Ok(Value::Bool(b))
-    } else if env.is_instance_of(obj, "java/lang/Number")? {
+    } else if env.is_instance_of(&obj, "java/lang/Number")? {
         let d: f64 = env.call_method(obj, "doubleValue", "()D", &[])?.d()?;
         Ok(Value::from(d))
-    } else if env.is_instance_of(obj, "java/util/Map")? {
+    } else if env.is_instance_of(&obj, "java/util/Map")? {
         let map = JMap::from_env(env, &obj)?;
         let mut json = JsonMap::new();
         let mut iter = map.iter(env)?;
@@ -29,7 +29,7 @@ fn to_value(env: &mut JNIEnv, obj: JObject) -> Result<Value, jni::errors::Error>
             json.insert(key, to_value(env, v)?);
         }
         Ok(Value::Object(json))
-    } else if env.is_instance_of(obj, "java/util/List")? {
+    } else if env.is_instance_of(&obj, "java/util/List")? {
         let list = JList::from_env(env, &obj)?;
         let size = list.size(env)? as usize;
         let mut arr = Vec::with_capacity(size);
